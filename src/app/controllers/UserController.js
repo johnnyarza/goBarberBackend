@@ -1,5 +1,6 @@
 import * as Yup from 'yup';
 import User from '../models/User';
+import File from '../models/File';
 
 class UserController {
   async store(req, res) {
@@ -54,9 +55,16 @@ class UserController {
     if (oldPassword && !(await user.checkPassword(oldPassword))) {
       return res.status(401).json({ error: 'Senha inválida' });
     }
-    const { id, name, provider } = await user.update(req.body);
+    const response = await user.update(req.body);
+    const newUser = await User.findByPk(response.id, {
+      include: [
+        { model: File, as: 'avatar', attributes: ['id', 'path', 'url'] },
+      ],
+    });
 
-    return res.json({ id, name, email, provider });
+    const { id, name, provider, avatar } = newUser;
+
+    return res.json({ id, name, email, provider, avatar });
   }
 }
 
